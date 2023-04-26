@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import scipy as sp
 from implicit.nearest_neighbours import ItemItemRecommender
-from lightfm import LightFM
+# from lightfm import LightFM
 from scipy.sparse import csr_matrix
 
 
@@ -145,12 +145,33 @@ class KNNModelWithTop(BaseModelZoo):
             reco = self.unique_reco(reco)[:k_recs]  # Удаляем дубли
 
         return reco
+    def reco_predict_with_score(
+        self,
+        user_id: int,
+        k_recs: int
+    ) -> List[int]:
+        """
+        Main function for recommendation items to users
+        :param user_id: user identification
+        :param k_recs: how many recs do you need
+        :return: list of recommendation ids
+        """
+        reco = (
+            self.data[self.data.user_id == user_id][['item_id', 'score']]
+            .tolist()
+            [:k_recs]
+        )
 
+        if len(reco) < k_recs:
+            reco.extend(self.top_reco)
+            reco = self.unique_reco(reco)[:k_recs]  # Удаляем дубли
+
+        return reco
 
 class OnlineModel(BaseModelZoo):
     def __init__(
         self,
-        path_to_model: str = "data/knn_bm25.pickle",
+        path_to_model: str = "data/bm25all.dill",
         top_reco: Tuple[int, ...] = tuple([
             10440, 15297, 9728, 13865, 3734,
             12192, 4151, 11863, 7793, 7829
@@ -318,38 +339,38 @@ class UserKNN:
         return result.item_id.tolist()[:n_recs]
 
 
-class LightFMWrapper:
-    """
-    Class for fit-predict LightFM
-    """
-    def __init__(
-        self,
-        random_state: int = 42,
-        learning_rate: float = 0.05,
-        no_components: int = 10,
-        item_alpha: float = 0,
-        user_alpha: float = 0,
-        loss: str = 'warp',
-    ):
-
-        self.is_fitted = False
-
-        self.mapping: Dict[str, Dict[int, int]] = defaultdict(dict)
-
-        self.weights_matrix = None
-        self.users_watched = None
-
-        self.user_features = None
-        self.item_features = None
-
-        self.model = LightFM(
-            loss=loss,
-            no_components=no_components,
-            user_alpha=user_alpha,
-            item_alpha=item_alpha,
-            random_state=random_state,
-            learning_rate=learning_rate,
-        )
+# class LightFMWrapper:
+#     """
+#     Class for fit-predict LightFM
+#     """
+#     def __init__(
+#         self,
+#         random_state: int = 42,
+#         learning_rate: float = 0.05,
+#         no_components: int = 10,
+#         item_alpha: float = 0,
+#         user_alpha: float = 0,
+#         loss: str = 'warp',
+#     ):
+#
+#         self.is_fitted = False
+#
+#         self.mapping: Dict[str, Dict[int, int]] = defaultdict(dict)
+#
+#         self.weights_matrix = None
+#         self.users_watched = None
+#
+#         self.user_features = None
+#         self.item_features = None
+#
+#         self.model = LightFM(
+#             loss=loss,
+#             no_components=no_components,
+#             user_alpha=user_alpha,
+#             item_alpha=item_alpha,
+#             random_state=random_state,
+#             learning_rate=learning_rate,
+#         )
 
     def get_mappings(self, users, items):
         self.mapping['users_inv_mapping'] = dict(

@@ -2,6 +2,9 @@ from typing import List, Optional, Sequence
 
 from pydantic import BaseModel
 
+class ExplainResponse(BaseModel):
+    p: int
+    explanation: str
 
 class RecoResponse(BaseModel):
     user_id: int
